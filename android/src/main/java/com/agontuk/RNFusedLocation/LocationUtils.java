@@ -136,6 +136,16 @@ public class LocationUtils {
     coords.putDouble("heading", location.getBearing());
     coords.putDouble("speed", location.getSpeed());
 
+    Bundle bundle = location.getExtras();
+    if (bundle != null) {
+      WritableMap extras = Arguments.createMap();
+      for (String key: bundle.keySet()) {
+        putIntoMap(extras, key, bundle.get(key));
+      }
+
+      map.putMap("extras", extras);
+    }
+
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
       coords.putDouble("altitudeAccuracy", location.getVerticalAccuracyMeters());
     }
@@ -166,6 +176,28 @@ public class LocationUtils {
       case INTERNAL_ERROR:
       default:
         return "Internal error occurred";
+    }
+  }
+
+  protected static void putIntoMap(WritableMap map, String key, Object value) {
+    if (value instanceof Integer) {
+      map.putInt(key, (Integer) value);
+    } else if (value instanceof Long) {
+      map.putInt(key, ((Long) value).intValue());
+    } else if (value instanceof Float) {
+      map.putDouble(key, (Float) value);
+    } else if (value instanceof Double) {
+      map.putDouble(key, (Double) value);
+    } else if (value instanceof String) {
+      map.putString(key, (String) value);
+    } else if (value instanceof Boolean) {
+      map.putBoolean(key, (Boolean) value);
+    } else if (value instanceof int[]
+      || value instanceof long[]
+      || value instanceof double[]
+      || value instanceof String[]
+      || value instanceof boolean[]) {
+      map.putArray(key,  Arguments.fromArray(value));
     }
   }
 }
