@@ -158,13 +158,16 @@ public class FusedLocationProvider implements LocationProvider {
   }
 
   private LocationRequest buildLocationRequest(LocationOptions options) {
-    LocationRequest locationRequest = new LocationRequest();
+    LocationRequest.Builder builder = new LocationRequest.Builder(options.getInterval());
     int priority = getLocationPriority(options.getAccuracy());
 
-    locationRequest.setPriority(priority)
-      .setInterval(options.getInterval())
-      .setFastestInterval(options.getFastestInterval())
-      .setSmallestDisplacement(isSingleUpdate ? 0 : options.getDistanceFilter());
+    LocationRequest locationRequest = builder
+      .setPriority(priority)
+      .setDurationMillis(options.getTimeout())
+      .setIntervalMillis(options.getInterval())
+      .setMinUpdateIntervalMillis(options.getFastestInterval())
+      .setMinUpdateDistanceMeters(isSingleUpdate ? 0 : options.getDistanceFilter())
+      .build();
 
     return locationRequest;
   }
@@ -273,7 +276,7 @@ public class FusedLocationProvider implements LocationProvider {
   private void startLocationUpdates() {
     fusedLocationProviderClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper());
 
-    if (isSingleUpdate) {
+    if (isSingleUpdate || locationRequest.getDurationMillis() < Long.MAX_VALUE) {
       long timeout = locationOptions.getTimeout();
 
       if (timeout > 0 && timeout != Long.MAX_VALUE) {
